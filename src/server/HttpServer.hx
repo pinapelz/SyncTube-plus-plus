@@ -1,6 +1,7 @@
 package server;
 
 import Types.UploadResponse;
+import haxe.crypto.Sha256;
 import haxe.io.Path;
 import js.node.Buffer;
 import js.node.Fs.Fs;
@@ -24,10 +25,8 @@ private class HttpServerConfig {
 	public final cache:Cache = null;
 }
 
-typedef SetupAdminRequest = {
-	name:String,
+typedef GateRequest = {
 	password:String,
-	passwordConfirmation:String,
 }
 
 class HttpServer {
@@ -100,8 +99,8 @@ class HttpServer {
 				}
 			}
 			switch url.pathname {
-				case "/setup":
-					finishSetup(req, res);
+				case "/gate":
+					verifyGate(req, res);
 			}
 			return;
 		}
@@ -121,8 +120,8 @@ class HttpServer {
 			return;
 		}
 
-		if (url.pathname == "/setup") {
-			if (main.hasAdmins()) {
+		if (url.pathname == "/gate") {
+			if (!hasGatePassword() || hasValidGateCookie(req)) {
 				res.redirect("/");
 				return;
 			}
@@ -158,8 +157,8 @@ class HttpServer {
 			}
 
 			if (ext == "html") {
-				if (!main.isNoState && !main.hasAdmins()) {
-					res.redirect("/setup");
+				if (hasGatePassword() && !hasValidGateCookie(req)) {
+					res.redirect("/gate");
 					return;
 				}
 				// replace ${textId} to localized strings
@@ -244,8 +243,8 @@ class HttpServer {
 		});
 	}
 
-	function finishSetup(req:IncomingMessage, res:ServerResponse) {
-		if (main.hasAdmins()) {
+	function verifyGate(req:IncomingMessage, res:ServerResponse) {
+		if (!hasGatePassword()) {
 			return res.redirect("/");
 		}
 
@@ -257,55 +256,41 @@ class HttpServer {
 
 		req.on("end", () -> {
 			final body = Buffer.concat(bodyChunks).toString();
-			final jsonParser = new JsonParser<SetupAdminRequest>();
+			final jsonParser = new JsonParser<GateRequest>();
 			final jsonData = jsonParser.fromJson(body);
 			if (jsonParser.errors.length > 0) {
-				final errors = ErrorUtils.convertErrorArray(jsonParser.errors);
-				trace(errors);
-				res.status(400).json({success: false, errors: []});
+				res.status(400).json({success: false});
 				return;
 			}
-			final name = jsonData.name;
 			final password = jsonData.password;
-			final passwordConfirmation = jsonData.passwordConfirmation;
-			final lang = req.headers["accept-language"] ?? "en";
-			final errors:Array<{type:String, error:String}> = [];
-
-			if (main.isBadClientName(name)) {
-				final error = Lang.get(lang, "usernameError")
-					.replace("$MAX", '${main.config.maxLoginLength}');
-				errors.push({
-					type: "name",
-					error: error
-				});
+			if (password == main.config.gatePassword) {
+				final token = getGateToken();
+				res.setHeader("set-cookie", 'gate_auth=$token; Path=/; HttpOnly; SameSite=Strict');
+				res.status(200).json({success: true});
+			} else {
+				res.status(401).json({success: false});
 			}
-
-			final min = Main.MIN_PASSWORD_LENGTH;
-			final max = Main.MAX_PASSWORD_LENGTH;
-			if (password.length < min || password.length > max) {
-				final error = Lang.get(lang, "passwordError")
-					.replace("$MIN", '$min').replace("$MAX", '$max');
-				errors.push({
-					type: "password",
-					error: error
-				});
-			}
-
-			if (password != passwordConfirmation) {
-				errors.push({
-					type: "password",
-					error: Lang.get(lang, "passwordsMismatchError")
-				});
-			}
-
-			if (errors.length > 0) {
-				res.status(400).json({success: false, errors: errors});
-				return;
-			}
-
-			main.addAdmin(name, password);
-			res.status(200).json({success: true});
 		});
+	}
+
+	function hasGatePassword():Bool {
+		final gp = main.config.gatePassword;
+		return gp != null && gp.length > 0;
+	}
+
+	function hasValidGateCookie(req:IncomingMessage):Bool {
+		final cookieHeader:String = req.headers["cookie"];
+		if (cookieHeader == null) return false;
+		final token = getGateToken();
+		final needle = 'gate_auth=$token';
+		for (cookie in cookieHeader.split(";")) {
+			if (cookie.trim() == needle) return true;
+		}
+		return false;
+	}
+
+	function getGateToken():String {
+		return Sha256.encode('gate_${main.config.gatePassword}_${main.config.salt}');
 	}
 
 	function getPath(dir:String, url:URL):String {

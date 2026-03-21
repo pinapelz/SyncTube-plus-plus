@@ -31,6 +31,7 @@ typedef VideoData = {
 
 typedef ServerConfig = Config & {
 	serverChatHistory:Int,
+	gatePassword:String,
 	localAdmins:Bool,
 	allowProxyIps:Bool,
 	localNetworkOnly:Bool,
