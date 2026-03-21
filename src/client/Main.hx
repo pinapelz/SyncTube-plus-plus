@@ -85,7 +85,7 @@ class Main {
 			name: "",
 			hash: "",
 			chatSize: 300,
-			synchThreshold: 2,
+			synchThreshold: 1,
 			isSwapped: false,
 			isUserListHidden: true,
 			latestLinks: [],

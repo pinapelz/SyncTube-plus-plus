@@ -36,26 +36,33 @@
     const formElement = document.getElementById("setup-form");
     const errorsElement = document.getElementById("form-errors");
 
+    function submitPassword(pw) {
+      const payload = { password: pw };
+      return fetch("/gate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(response => handleResponse(response, pw))
+        .catch(() => handleResponse(null, pw));
+    }
+
     formElement.addEventListener("submit", function (e) {
       e.preventDefault();
-
       const { password } = formElement.elements;
-      const payload = {
-        password: password.value,
-      };
-
-      fetch("/gate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(response => handleResponse(response))
-        .catch(() => handleResponse(null));
+      submitPassword(password.value);
     }, true);
 
-    function handleResponse(response) {
+    const savedPassword = localStorage.getItem("gate_password");
+    if (savedPassword) {
+      submitPassword(savedPassword);
+    }
+
+    function handleResponse(response, pw) {
       if (response && response.success === true) {
+        localStorage.setItem("gate_password", pw);
         window.location.href = "/";
         return;
       }
 
+      localStorage.removeItem("gate_password");
       showErrors(errorsElement, ["Incorrect password. Not cool man"]);
     }
 
