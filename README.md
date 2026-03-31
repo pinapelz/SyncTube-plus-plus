@@ -1,3 +1,5 @@
+This fork adds basic password based authentication to prevent unwanted users from joining and strips most existing emotes.
+
 # <img src="./res/img/favicon.svg" width="40" height="40" align="top"> SyncTube
 Synchronized video viewing with chat and other features.
 Lightweight modern implementation and a very easy way to run locally.
