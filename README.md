@@ -1,3 +1,8 @@
+Fork Key Differences
+- `gatePassword` config option, allowing only people who know the password to enter
+- `adminToken` allows for registering admin on the frontend using a known token
+- `/admin-register` page that is visible only if `adminToken` is set
+
 This fork adds basic password based authentication to prevent unwanted users from joining and strips most existing emotes.
 
 # <img src="./res/img/favicon.svg" width="40" height="40" align="top"> SyncTube

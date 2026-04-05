@@ -1,0 +1,89 @@
+<!-- localization-template -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <title>SyncTube</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link id="usertheme" href="css/des.css" rel="stylesheet">
+  <link id="usertheme" href="css/setup.css" rel="stylesheet">
+  <link id="customcss" href="css/custom.css" rel="stylesheet">
+</head>
+
+<body>
+  <main class="setup">
+    <h1 class="setup-title">Admin Registration</h1>
+    <p>Enter the admin token to register your account</p>
+
+    <form id="admin-form" class="setup-form">
+      <input type="text" name="name" placeholder="Username">
+      <input type="password" name="password" placeholder="Password">
+      <input type="password" name="confirmation" placeholder="Repeat password">
+      <input type="password" name="token" placeholder="Admin Token">
+
+      <div id="form-errors" class="form-errors"></div>
+
+      <button type="submit">Register</button>
+    </form>
+  </main>
+
+  <script>
+    const formElement = document.getElementById("admin-form");
+    const errorsElement = document.getElementById("form-errors");
+
+    formElement.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const { name, password, confirmation, token } = formElement.elements;
+
+      const payload = {
+        name: name.value,
+        password: password.value,
+        passwordConfirmation: confirmation.value,
+        token: token.value
+      };
+
+      fetch("/admin-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(response => handleResponse(response))
+        .catch(() => handleResponse(null));
+    }, true);
+
+    function handleResponse(response) {
+      if (response && response.success === true) {
+        errorsElement.innerHTML = "";
+        const successEl = document.createElement("div");
+        successEl.innerText = "Admin account created! You can now log in.";
+        successEl.style.color = "green";
+        errorsElement.appendChild(successEl);
+
+        Array.from(formElement.elements).forEach(el => { el.disabled = true; });
+        return;
+      }
+
+      const message = (response && response.error) ? response.error : "Registration failed";
+      showErrors(errorsElement, [message]);
+    }
+
+    function showErrors(container, errors) {
+      container.innerHTML = "";
+
+      errors.forEach(function (message) {
+        const errorEl = document.createElement("div");
+        errorEl.innerText = message;
+        container.appendChild(errorEl);
+      });
+    }
+  </script>
+</body>
+
+</html>

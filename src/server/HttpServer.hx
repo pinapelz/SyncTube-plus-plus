@@ -29,6 +29,13 @@ typedef GateRequest = {
 	password:String,
 }
 
+typedef AdminRegisterRequest = {
+	name:String,
+	password:String,
+	passwordConfirmation:String,
+	token:String,
+}
+
 class HttpServer {
 	static final mimeTypes = [
 		"html" => "text/html",
@@ -101,6 +108,8 @@ class HttpServer {
 			switch url.pathname {
 				case "/gate":
 					verifyGate(req, res);
+				case "/admin-register":
+					registerAdmin(req, res);
 			}
 			return;
 		}
@@ -127,6 +136,23 @@ class HttpServer {
 			}
 
 			Fs.readFile('$dir/setup.html', (err:Dynamic, data:Buffer) -> {
+				data = Buffer.from(localizeHtml(data.toString(), req.headers["accept-language"]));
+				res.setHeader("content-type", getMimeType("html"));
+				res.end(data);
+			});
+			return;
+		}
+
+		if (url.pathname == "/admin-register") {
+			if (!hasAdminToken()) {
+				res.redirect("/");
+				return;
+			}
+			Fs.readFile('$dir/admin-register.html', (err:Dynamic, data:Buffer) -> {
+				if (err != null) {
+					readFileError(err, res, '$dir/admin-register.html');
+					return;
+				}
 				data = Buffer.from(localizeHtml(data.toString(), req.headers["accept-language"]));
 				res.setHeader("content-type", getMimeType("html"));
 				res.end(data);
@@ -291,6 +317,55 @@ class HttpServer {
 
 	function getGateToken():String {
 		return Sha256.encode('gate_${main.config.gatePassword}_${main.config.salt}');
+	}
+
+	function hasAdminToken():Bool {
+		final t = main.config.adminToken;
+		return t != null && t.length > 0;
+	}
+
+	function registerAdmin(req:IncomingMessage, res:ServerResponse) {
+		if (!hasAdminToken()) {
+			res.status(403).json({success: false, error: "Admin registration is disabled"});
+			return;
+		}
+
+		final bodyChunks:Array<Buffer> = [];
+		req.on("data", chunk -> bodyChunks.push(chunk));
+		req.on("end", () -> {
+			final body = Buffer.concat(bodyChunks).toString();
+			final jsonParser = new JsonParser<AdminRegisterRequest>();
+			final jsonData = jsonParser.fromJson(body);
+			if (jsonParser.errors.length > 0) {
+				res.status(400).json({success: false, error: "Invalid request"});
+				return;
+			}
+			final name = jsonData.name.trim();
+			final password = jsonData.password;
+			final passwordConfirmation = jsonData.passwordConfirmation;
+			final token = jsonData.token;
+
+			if (token != main.config.adminToken) {
+				res.status(401).json({success: false, error: "Invalid admin token"});
+				return;
+			}
+			if (main.isBadClientName(name)) {
+				res.status(400).json({success: false, error: "Invalid username"});
+				return;
+			}
+			final min = Main.MIN_PASSWORD_LENGTH;
+			final max = Main.MAX_PASSWORD_LENGTH;
+			if (password.length < min || password.length > max) {
+				res.status(400).json({success: false, error: 'Password must be $min-$max characters'});
+				return;
+			}
+			if (password != passwordConfirmation) {
+				res.status(400).json({success: false, error: "Passwords do not match"});
+				return;
+			}
+			main.addAdmin(name, password);
+			res.status(200).json({success: true});
+		});
 	}
 
 	function getPath(dir:String, url:URL):String {

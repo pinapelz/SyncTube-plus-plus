@@ -2,6 +2,7 @@
   "port": 4200,
   "channelName": "Dohee Cinema",
   "gatePassword": "changeme",
+  "adminToken": "admin",
   "maxLoginLength": 20,
   "maxMessageLength": 500,
   "serverChatHistory": 50,
