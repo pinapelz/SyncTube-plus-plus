@@ -3,17 +3,44 @@
 /* CSS Document */
 
 :root {
-  --background-video: #000;
-  --background-chat: #111;
-  --scroll-to-end-bg: #fff;
-  --midground: #888;
-  --foreground: #bbb;
-  --accent: #0055ff;
-  --success: #009632;
-  --leader-hint: #00963288;
-  --warning: #ffb800;
-  --error: #ff0800;
-  --border: #333;
+  --cl-black:       hsl(140, 1%, 6%);
+  --cl-gray-0:      hsl(140, 2%, 8%);
+  --cl-gray-1:      hsl(140, 2%, 12%);
+  --cl-gray-2:      hsl(140, 4%, 16%);
+  --cl-gray-3:      hsl(140, 4%, 24%);
+  --cl-gray-4:      hsl(140, 4%, 36%);
+  --cl-gray-5:      hsl(140, 4%, 44%);
+  --cl-gray-6:      hsl(80, 8%, 52%);
+  --cl-gray-7:      hsl(70, 8%, 58%);
+  --cl-gray-8:      hsl(60, 16%, 66%);
+  --cl-gray-9:      hsl(40, 32%, 78%);
+  --cl-gray-10:     hsl(30, 32%, 84%);
+  --cl-white:       hsl(26, 64%, 88%);
+  --cl-red-6:       hsl(4, 83%, 67%);
+  --cl-red-7:       hsl(4, 75%, 75%);
+  --cl-orange-6:    hsl(26, 84%, 62%);
+  --cl-orange-7:    hsl(26, 84%, 74%);
+  --cl-yellow:      hsl(37, 80%, 69%);
+  --cl-green-6:     hsl(120, 41%, 64%);
+  --cl-green-7:     hsl(120, 42%, 75%);
+  --cl-cyan-6:      hsl(160, 41%, 64%);
+  --cl-cyan-7:      hsl(160, 32%, 75%);
+  --cl-blue-6:      hsl(200, 55%, 64%);
+  --cl-blue-8:      hsl(201, 55%, 80%);
+  --cl-magenta-7:   hsl(320, 59%, 72%);
+  --cl-magenta-8:   hsl(320, 61%, 80%);
+
+  --background-video: var(--cl-gray-0);
+  --background-chat: var(--cl-gray-1);
+  --scroll-to-end-bg: var(--cl-gray-8);
+  --midground: var(--cl-gray-5);
+  --foreground: var(--cl-white);
+  --accent: var(--cl-orange-6);
+  --success: var(--cl-green-6);
+  --leader-hint: hsl(120, 41%, 64%, 0.53);
+  --warning: var(--cl-yellow);
+  --error: var(--cl-red-6);
+  --border: var(--cl-gray-3);
   --box-shadow: 0rem .25rem 1rem rgba(0, 0, 0, .25);
 }
 
@@ -30,7 +57,7 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Roboto Mono", Menlo, Monaco, Consolas, "Courier New", monospace, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 1rem;
   line-height: 1.4;
   color: var(--foreground);
@@ -98,7 +125,24 @@ h6 {
 }
 
 a {
-  color: var(--accent);
+  text-decoration: none;
+  transition: color ease-in-out .15s;
+}
+
+a:link {
+  color: var(--cl-orange-6);
+}
+
+a:visited {
+  color: var(--cl-green-6);
+}
+
+a:hover {
+  color: var(--cl-magenta-7);
+}
+
+a:active {
+  color: var(--cl-green-6);
 }
 
 ul {
@@ -121,9 +165,9 @@ textarea {
 }
 
 code {
-  background: var(--background-chat);
+  background: var(--cl-gray-2);
   border: solid var(--border) 1px;
-  border-radius: .5rem;
+  border-radius: 0;
   padding: .25rem;
   word-break: break-all;
   display: inline-flex;
@@ -142,12 +186,12 @@ button {
   display: inline-flex;
   align-items: center;
   text-align: center;
-  background-color: var(--background-chat);
+  background-color: var(--cl-gray-2);
   color: var(--midground);
   line-height: 1;
   cursor: pointer;
   padding: .5rem;
-  border-radius: .5rem;
+  border-radius: 0;
   border: 0;
   transition: background-color ease-in-out .15s, color ease-in-out .15s;
 }
@@ -163,7 +207,7 @@ button:not(:first-child) {
 
 button:hover,
 button.active {
-  background-color: rgba(0, 0, 0, .5);
+  background-color: var(--cl-gray-3);
   color: var(--foreground);
 }
 
@@ -252,9 +296,9 @@ input[type=text],
 input[type="password"],
 textarea {
   padding: .5rem;
-  border-radius: .5rem;
+  border-radius: 0;
   color: var(--foreground);
-  background-color: var(--background-video);
+  background-color: var(--cl-gray-2);
   border: .125rem solid;
   border-color: var(--border);
   transition: border-color ease-in-out .15s;
@@ -577,7 +621,7 @@ iframe#videoplayer {
 }
 
 .queue_temp {
-  background-color: var(--background-chat);
+  background-color: var(--cl-gray-2);
 }
 
 .queue_entry {
@@ -672,9 +716,9 @@ footer#footer {
 
 #userlist-wrap {
   overflow-y: auto;
-  background-color: var(--background-video);
+  background-color: var(--cl-gray-2);
   border-right: 0;
-  border-radius: 1rem;
+  border-radius: 0;
   flex-shrink: 0;
 
   transition: 0ms;
@@ -700,7 +744,7 @@ footer#footer {
 }
 
 .userlist_owner {
-  color: var(--accent);
+  color: var(--cl-blue-6);
   font-weight: bold;
 }
 
@@ -733,6 +777,7 @@ footer#footer {
   display: block;
   text-overflow: ellipsis;
   overflow: hidden;
+  padding-right: 0.4rem;
 }
 
 /* Options */
@@ -894,8 +939,8 @@ footer#footer {
   display: flex;
   height: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 1rem;
+  background: var(--cl-gray-2);
+  border-radius: 0;
   overflow-y: scroll;
   text-align: center;
 }
