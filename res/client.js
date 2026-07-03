@@ -1535,6 +1535,78 @@ client_Main.prototype = {
 	,initListeners: function() {
 		var _gthis = this;
 		client_Buttons.init(this);
+		var openBtn = window.document.getElementById("openChatBtn");
+		var openBtnFadeTimer = null;
+		if(openBtn == null) {
+			openBtn = window.document.createElement("button");
+			openBtn.id = "openChatBtn";
+			openBtn.innerText = "Expand";
+			openBtn.setAttribute("style","position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 10000; display: none; padding: .5rem; background: rgba(0,0,0,0.4); color: var(--foreground); border: none; border-radius: .25rem 0 0 .25rem; transition: opacity 200ms; opacity: 1;");
+			window.document.body.appendChild(openBtn);
+		}
+		var toggleChatBtn = window.document.querySelector("#togglechat");
+		openBtn.onclick = function(e) {
+			toggleChatBtn.click();
+		};
+		openBtn.onmouseenter = function(e) {
+			openBtn.style.opacity = "1";
+			if(openBtnFadeTimer != null) {
+				openBtnFadeTimer.stop();
+			}
+		};
+		openBtn.onmouseleave = function(e) {
+			if(openBtnFadeTimer != null) {
+				openBtnFadeTimer.stop();
+			}
+			openBtnFadeTimer = haxe_Timer.delay(function() {
+				openBtn.style.opacity = "0.25";
+			},2000);
+			return openBtnFadeTimer;
+		};
+		window.document.querySelector("#togglechat").onclick = function(e) {
+			var chat = window.document.querySelector("#chat");
+			var bodyEl = window.document.querySelector("body");
+			var sizes = bodyEl.style.gridTemplateColumns;
+			if(sizes == null || sizes == "") {
+				sizes = "1fr 4px 300px";
+			}
+			var parts = sizes.split(" ");
+			var chatIndex = _gthis.settings.isSwapped ? 0 : parts.length - 1;
+			if(chat.style.display == "none") {
+				chat.style.display = "";
+				var prev = bodyEl.getAttribute("data-prev-grid");
+				if(prev != null) {
+					bodyEl.style.gridTemplateColumns = prev;
+					bodyEl.removeAttribute("data-prev-grid");
+				} else {
+					parts[chatIndex] = "" + _gthis.settings.chatSize + "px";
+					if(parts.length > 1) {
+						parts[1] = "4px";
+					}
+					bodyEl.style.gridTemplateColumns = parts.join(" ");
+				}
+				openBtn.style.display = "none";
+				if(openBtnFadeTimer != null) {
+					openBtnFadeTimer.stop();
+				}
+			} else {
+				bodyEl.setAttribute("data-prev-grid",bodyEl.style.gridTemplateColumns);
+				parts[chatIndex] = "0px";
+				if(parts.length > 1) {
+					parts[1] = "0px";
+				}
+				bodyEl.style.gridTemplateColumns = parts.join(" ");
+				chat.style.display = "none";
+				openBtn.style.display = "";
+				openBtn.style.opacity = "1";
+				if(openBtnFadeTimer != null) {
+					openBtnFadeTimer.stop();
+				}
+				openBtnFadeTimer = haxe_Timer.delay(function() {
+					openBtn.style.opacity = "0.25";
+				},2000);
+			}
+		};
 		var leaderBtn = window.document.querySelector("#leader_btn");
 		leaderBtn.onclick = $bind(this,this.toggleLeader);
 		leaderBtn.oncontextmenu = function(e) {
@@ -1764,7 +1836,7 @@ client_Main.prototype = {
 		var data = JSON.parse(e.data);
 		if(this.config != null && this.config.isVerbose) {
 			var t = data.type;
-			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 489, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
+			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 544, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
 		}
 		client_JsApi.fireEvents(data);
 		switch(data.type) {

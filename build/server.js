@@ -1304,6 +1304,43 @@ JsonParser_$8d3a3702ec359ae3022bce905b75550b.prototype = $extend(json2object_rea
 	}
 	,__class__: JsonParser_$8d3a3702ec359ae3022bce905b75550b
 });
+var JsonParser_$9dc54ddefde837b3151ea03ad5d1144e = function(errors,putils,errorType) {
+	if(errorType == null) {
+		errorType = 0;
+	}
+	json2object_reader_BaseParser.call(this,errors,putils,errorType);
+};
+JsonParser_$9dc54ddefde837b3151ea03ad5d1144e.__name__ = true;
+JsonParser_$9dc54ddefde837b3151ea03ad5d1144e.__super__ = json2object_reader_BaseParser;
+JsonParser_$9dc54ddefde837b3151ea03ad5d1144e.prototype = $extend(json2object_reader_BaseParser.prototype,{
+	onIncorrectType: function(pos,variable) {
+		this.errors.push(json2object_Error.IncorrectType(variable,"{ password : String }",pos));
+		json2object_reader_BaseParser.prototype.onIncorrectType.call(this,pos,variable);
+	}
+	,loadJsonNull: function(pos,variable) {
+		this.value = null;
+	}
+	,loadJsonObject: function(o,pos,variable) {
+		var assigned = new haxe_ds_StringMap();
+		this.objectSetupAssign(assigned,["password"],[false]);
+		this.value = this.getAuto();
+		var _g = 0;
+		while(_g < o.length) {
+			var field = o[_g];
+			++_g;
+			if(field.name == "password") {
+				this.value.password = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"password",assigned,this.value.password,pos);
+			} else {
+				this.errors.push(json2object_Error.UnknownVariable(field.name,this.putils.convertPosition(field.namePos)));
+			}
+		}
+		this.objectErrors(assigned,pos);
+	}
+	,getAuto: function() {
+		return { password : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1)))};
+	}
+	,__class__: JsonParser_$9dc54ddefde837b3151ea03ad5d1144e
+});
 var JsonParser_$a82c17fc41c21179c58e1d406d2b20cd = function(errors,putils,errorType) {
 	if(errorType == null) {
 		errorType = 0;
@@ -1696,6 +1733,54 @@ JsonParser_$d1c1e71f4452df068de6cecc104f6dd6.prototype = $extend(json2object_rea
 	}
 	,__class__: JsonParser_$d1c1e71f4452df068de6cecc104f6dd6
 });
+var JsonParser_$d581436aae29874719279c60b2eb25d0 = function(errors,putils,errorType) {
+	if(errorType == null) {
+		errorType = 0;
+	}
+	json2object_reader_BaseParser.call(this,errors,putils,errorType);
+};
+JsonParser_$d581436aae29874719279c60b2eb25d0.__name__ = true;
+JsonParser_$d581436aae29874719279c60b2eb25d0.__super__ = json2object_reader_BaseParser;
+JsonParser_$d581436aae29874719279c60b2eb25d0.prototype = $extend(json2object_reader_BaseParser.prototype,{
+	onIncorrectType: function(pos,variable) {
+		this.errors.push(json2object_Error.IncorrectType(variable,"{ token : String, passwordConfirmation : String, password : String, name : String }",pos));
+		json2object_reader_BaseParser.prototype.onIncorrectType.call(this,pos,variable);
+	}
+	,loadJsonNull: function(pos,variable) {
+		this.value = null;
+	}
+	,loadJsonObject: function(o,pos,variable) {
+		var assigned = new haxe_ds_StringMap();
+		this.objectSetupAssign(assigned,["name","password","passwordConfirmation","token"],[false,false,false,false]);
+		this.value = this.getAuto();
+		var _g = 0;
+		while(_g < o.length) {
+			var field = o[_g];
+			++_g;
+			switch(field.name) {
+			case "name":
+				this.value.name = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"name",assigned,this.value.name,pos);
+				break;
+			case "password":
+				this.value.password = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"password",assigned,this.value.password,pos);
+				break;
+			case "passwordConfirmation":
+				this.value.passwordConfirmation = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"passwordConfirmation",assigned,this.value.passwordConfirmation,pos);
+				break;
+			case "token":
+				this.value.token = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"token",assigned,this.value.token,pos);
+				break;
+			default:
+				this.errors.push(json2object_Error.UnknownVariable(field.name,this.putils.convertPosition(field.namePos)));
+			}
+		}
+		this.objectErrors(assigned,pos);
+	}
+	,getAuto: function() {
+		return { name : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1))), password : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1))), passwordConfirmation : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1))), token : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1)))};
+	}
+	,__class__: JsonParser_$d581436aae29874719279c60b2eb25d0
+});
 var JsonParser_$d7778d0c64b6ba21494c97f77a66885a = function(errors,putils,errorType) {
 	if(errorType == null) {
 		errorType = 0;
@@ -2034,51 +2119,6 @@ JsonParser_$ed5dea09095f671b801bee34ea28a319.prototype = $extend(json2object_rea
 	}
 	,__class__: JsonParser_$ed5dea09095f671b801bee34ea28a319
 });
-var JsonParser_$f3c29c0813c93ee49a61ccf072b8a177 = function(errors,putils,errorType) {
-	if(errorType == null) {
-		errorType = 0;
-	}
-	json2object_reader_BaseParser.call(this,errors,putils,errorType);
-};
-JsonParser_$f3c29c0813c93ee49a61ccf072b8a177.__name__ = true;
-JsonParser_$f3c29c0813c93ee49a61ccf072b8a177.__super__ = json2object_reader_BaseParser;
-JsonParser_$f3c29c0813c93ee49a61ccf072b8a177.prototype = $extend(json2object_reader_BaseParser.prototype,{
-	onIncorrectType: function(pos,variable) {
-		this.errors.push(json2object_Error.IncorrectType(variable,"{ passwordConfirmation : String, password : String, name : String }",pos));
-		json2object_reader_BaseParser.prototype.onIncorrectType.call(this,pos,variable);
-	}
-	,loadJsonNull: function(pos,variable) {
-		this.value = null;
-	}
-	,loadJsonObject: function(o,pos,variable) {
-		var assigned = new haxe_ds_StringMap();
-		this.objectSetupAssign(assigned,["name","password","passwordConfirmation"],[false,false,false]);
-		this.value = this.getAuto();
-		var _g = 0;
-		while(_g < o.length) {
-			var field = o[_g];
-			++_g;
-			switch(field.name) {
-			case "name":
-				this.value.name = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"name",assigned,this.value.name,pos);
-				break;
-			case "password":
-				this.value.password = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"password",assigned,this.value.password,pos);
-				break;
-			case "passwordConfirmation":
-				this.value.passwordConfirmation = this.loadObjectField(($_=new JsonParser_$27118326006d3829667a400ad23d5d98(this.errors,this.putils,1),$bind($_,$_.loadJson)),field,"passwordConfirmation",assigned,this.value.passwordConfirmation,pos);
-				break;
-			default:
-				this.errors.push(json2object_Error.UnknownVariable(field.name,this.putils.convertPosition(field.namePos)));
-			}
-		}
-		this.objectErrors(assigned,pos);
-	}
-	,getAuto: function() {
-		return { name : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1))), password : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1))), passwordConfirmation : new JsonParser_$27118326006d3829667a400ad23d5d98([],this.putils,0).loadJson(new hxjsonast_Json(hxjsonast_JsonValue.JNull,new hxjsonast_Position("",0,1)))};
-	}
-	,__class__: JsonParser_$f3c29c0813c93ee49a61ccf072b8a177
-});
 var JsonParser_$f55acea3678203c700715b781ad1ef0c = function(errors,putils,errorType) {
 	if(errorType == null) {
 		errorType = 0;
@@ -2301,17 +2341,6 @@ Lambda.findIndex = function(it,f) {
 		++i;
 	}
 	return -1;
-};
-var haxe_IMap = function() { };
-haxe_IMap.__name__ = true;
-haxe_IMap.__isInterface__ = true;
-var haxe_ds_StringMap = function() {
-	this.h = Object.create(null);
-};
-haxe_ds_StringMap.__name__ = true;
-haxe_ds_StringMap.__interfaces__ = [haxe_IMap];
-haxe_ds_StringMap.prototype = {
-	__class__: haxe_ds_StringMap
 };
 var Lang = function() { };
 Lang.__name__ = true;
@@ -2585,6 +2614,9 @@ VideoList.prototype = {
 	}
 	,__class__: VideoList
 };
+var haxe_IMap = function() { };
+haxe_IMap.__name__ = true;
+haxe_IMap.__isInterface__ = true;
 var haxe_Exception = function(message,previous,native) {
 	Error.call(this,message);
 	this.message = message;
@@ -2821,6 +2853,14 @@ haxe_crypto_Sha256.prototype = {
 		return str.toLowerCase();
 	}
 	,__class__: haxe_crypto_Sha256
+};
+var haxe_ds_StringMap = function() {
+	this.h = Object.create(null);
+};
+haxe_ds_StringMap.__name__ = true;
+haxe_ds_StringMap.__interfaces__ = [haxe_IMap];
+haxe_ds_StringMap.prototype = {
+	__class__: haxe_ds_StringMap
 };
 var haxe_exceptions_PosException = function(message,previous,pos) {
 	haxe_Exception.call(this,message,previous);
@@ -3958,8 +3998,13 @@ server_HttpServer.prototype = {
 					break;
 				}
 			}
-			if(url.pathname == "/setup") {
-				this.finishSetup(req,res);
+			switch(url.pathname) {
+			case "/admin-register":
+				this.registerAdmin(req,res);
+				break;
+			case "/gate":
+				this.verifyGate(req,res);
+				break;
 			}
 			return;
 		}
@@ -3978,12 +4023,28 @@ server_HttpServer.prototype = {
 			res.end("Error getting the file: No access to " + rel + ".");
 			return;
 		}
-		if(url.pathname == "/setup") {
-			if(this.main.hasAdmins()) {
+		if(url.pathname == "/gate") {
+			if(!this.hasGatePassword() || this.hasValidGateCookie(req)) {
 				tools_HttpServerTools.redirect(res,"/");
 				return;
 			}
 			js_node_Fs.readFile("" + this.dir + "/setup.html",function(err,data) {
+				data = js_node_buffer_Buffer.from(_gthis.localizeHtml(data.toString(),req.headers["accept-language"]));
+				res.setHeader("content-type",_gthis.getMimeType("html"));
+				res.end(data);
+			});
+			return;
+		}
+		if(url.pathname == "/admin-register") {
+			if(!this.hasAdminToken()) {
+				tools_HttpServerTools.redirect(res,"/");
+				return;
+			}
+			js_node_Fs.readFile("" + this.dir + "/admin-register.html",function(err,data) {
+				if(err != null) {
+					_gthis.readFileError(err,res,"" + _gthis.dir + "/admin-register.html");
+					return;
+				}
 				data = js_node_buffer_Buffer.from(_gthis.localizeHtml(data.toString(),req.headers["accept-language"]));
 				res.setHeader("content-type",_gthis.getMimeType("html"));
 				res.end(data);
@@ -4015,8 +4076,8 @@ server_HttpServer.prototype = {
 				return;
 			}
 			if(ext == "html") {
-				if(!_gthis.main.isNoState && !_gthis.main.hasAdmins()) {
-					tools_HttpServerTools.redirect(res,"/setup");
+				if(_gthis.hasGatePassword() && !_gthis.hasValidGateCookie(req)) {
+					tools_HttpServerTools.redirect(res,"/gate");
 					return;
 				}
 				data = _gthis.localizeHtml(data.toString(),req.headers["accept-language"]);
@@ -4104,7 +4165,7 @@ server_HttpServer.prototype = {
 			}
 		});
 		stream.on("error",function(err) {
-			haxe_Log.trace(err,{ fileName : "src/server/HttpServer.hx", lineNumber : 231, className : "server.HttpServer", methodName : "uploadFile"});
+			haxe_Log.trace(err,{ fileName : "src/server/HttpServer.hx", lineNumber : 256, className : "server.HttpServer", methodName : "uploadFile"});
 			tools_HttpServerTools.json(tools_HttpServerTools.status(res,500),{ info : "File write stream error."});
 			var _this = _gthis.uploadingFilesSizes;
 			if(Object.prototype.hasOwnProperty.call(_this.h,filePath)) {
@@ -4117,7 +4178,7 @@ server_HttpServer.prototype = {
 			_gthis.cache.remove(name);
 		});
 		req.on("error",function(err) {
-			haxe_Log.trace("Request Error:",{ fileName : "src/server/HttpServer.hx", lineNumber : 238, className : "server.HttpServer", methodName : "uploadFile", customParams : [err]});
+			haxe_Log.trace("Request Error:",{ fileName : "src/server/HttpServer.hx", lineNumber : 263, className : "server.HttpServer", methodName : "uploadFile", customParams : [err]});
 			stream.destroy();
 			tools_HttpServerTools.json(tools_HttpServerTools.status(res,500),{ info : "File request error."});
 			var _this = _gthis.uploadingFilesSizes;
@@ -4131,9 +4192,9 @@ server_HttpServer.prototype = {
 			_gthis.cache.remove(name);
 		});
 	}
-	,finishSetup: function(req,res) {
+	,verifyGate: function(req,res) {
 		var _gthis = this;
-		if(this.main.hasAdmins()) {
+		if(!this.hasGatePassword()) {
 			tools_HttpServerTools.redirect(res,"/");
 			return;
 		}
@@ -4143,30 +4204,88 @@ server_HttpServer.prototype = {
 		});
 		req.on("end",function() {
 			var body = js_node_buffer_Buffer.concat(bodyChunks).toString();
-			var jsonParser = new JsonParser_$f3c29c0813c93ee49a61ccf072b8a177();
+			var jsonParser = new JsonParser_$9dc54ddefde837b3151ea03ad5d1144e();
 			var jsonData = jsonParser.fromJson(body);
 			if(jsonParser.errors.length > 0) {
-				haxe_Log.trace(json2object_ErrorUtils.convertErrorArray(jsonParser.errors),{ fileName : "src/server/HttpServer.hx", lineNumber : 264, className : "server.HttpServer", methodName : "finishSetup"});
-				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, errors : []});
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false});
 				return;
 			}
-			var name = jsonData.name;
+			if(jsonData.password == _gthis.main.config.gatePassword) {
+				var token = _gthis.getGateToken();
+				res.setHeader("set-cookie","gate_auth=" + token + "; Path=/; HttpOnly; SameSite=Strict");
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,200),{ success : true});
+			} else {
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,401),{ success : false});
+			}
+		});
+	}
+	,hasGatePassword: function() {
+		var gp = this.main.config.gatePassword;
+		if(gp != null) {
+			return gp.length > 0;
+		} else {
+			return false;
+		}
+	}
+	,hasValidGateCookie: function(req) {
+		var cookieHeader = req.headers["cookie"];
+		if(cookieHeader == null) {
+			return false;
+		}
+		var needle = "gate_auth=" + this.getGateToken();
+		var _g = 0;
+		var _g1 = cookieHeader.split(";");
+		while(_g < _g1.length) if(StringTools.trim(_g1[_g++]) == needle) {
+			return true;
+		}
+		return false;
+	}
+	,getGateToken: function() {
+		return haxe_crypto_Sha256.encode("gate_" + this.main.config.gatePassword + "_" + this.main.config.salt);
+	}
+	,hasAdminToken: function() {
+		var t = this.main.config.adminToken;
+		if(t != null) {
+			return t.length > 0;
+		} else {
+			return false;
+		}
+	}
+	,registerAdmin: function(req,res) {
+		var _gthis = this;
+		if(!this.hasAdminToken()) {
+			tools_HttpServerTools.json(tools_HttpServerTools.status(res,403),{ success : false, error : "Admin registration is disabled"});
+			return;
+		}
+		var bodyChunks = [];
+		req.on("data",function(chunk) {
+			return bodyChunks.push(chunk);
+		});
+		req.on("end",function() {
+			var body = js_node_buffer_Buffer.concat(bodyChunks).toString();
+			var jsonParser = new JsonParser_$d581436aae29874719279c60b2eb25d0();
+			var jsonData = jsonParser.fromJson(body);
+			if(jsonParser.errors.length > 0) {
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, error : "Invalid request"});
+				return;
+			}
+			var name = StringTools.trim(jsonData.name);
 			var password = jsonData.password;
 			var passwordConfirmation = jsonData.passwordConfirmation;
-			var tmp = req.headers["accept-language"];
-			var lang = tmp != null ? tmp : "en";
-			var errors = [];
+			if(jsonData.token != _gthis.main.config.adminToken) {
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,401),{ success : false, error : "Invalid admin token"});
+				return;
+			}
 			if(_gthis.main.isBadClientName(name)) {
-				errors.push({ type : "name", error : StringTools.replace(Lang.get(lang,"usernameError"),"$MAX","" + _gthis.main.config.maxLoginLength)});
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, error : "Invalid username"});
+				return;
 			}
 			if(password.length < 4 || password.length > 50) {
-				errors.push({ type : "password", error : StringTools.replace(StringTools.replace(Lang.get(lang,"passwordError"),"$MIN","" + 4),"$MAX","" + 50)});
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, error : "Password must be " + 4 + "-" + 50 + " characters"});
+				return;
 			}
 			if(password != passwordConfirmation) {
-				errors.push({ type : "password", error : Lang.get(lang,"passwordsMismatchError")});
-			}
-			if(errors.length > 0) {
-				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, errors : errors});
+				tools_HttpServerTools.json(tools_HttpServerTools.status(res,400),{ success : false, error : "Passwords do not match"});
 				return;
 			}
 			_gthis.main.addAdmin(name,password);
@@ -4855,9 +4974,6 @@ server_Main.prototype = {
 			return item.name == name;
 		}));
 		haxe_Log.trace("Admin " + name + " removed.",{ fileName : "src/server/Main.hx", lineNumber : 443, className : "server.Main", methodName : "removeAdmin"});
-	}
-	,hasAdmins: function() {
-		return this.userList.admins.length > 0;
 	}
 	,replayLog: function(events) {
 		var _gthis = this;

@@ -1,28 +1,23 @@
-Fork Key Differences
-- `gatePassword` config option, allowing only people who know the password to enter
-- `adminToken` allows for registering admin on the frontend using a known token
-- `/admin-register` page that is visible only if `adminToken` is set
-
-This fork adds basic password based authentication to prevent unwanted users from joining and strips most existing emotes.
-
-# <img src="./res/img/favicon.svg" width="40" height="40" align="top"> SyncTube
-Synchronized video viewing with chat and other features.
+# <img src="./res/img/favicon.svg" width="40" height="40" align="top"> SyncTube++
+Synchronized video viewing with chat and other features, forked from the original [SyncTube](https://github.com/RblSb/SyncTube).
 Lightweight modern implementation and a very easy way to run locally.
 
-Default channel example: https://synctube.onrender.com/
-
-## Features
+## Original Features
 - Control video playback for all users with active `Leader` button
 - Start watching local videos while uploading them to the server, before upload completes
 - External `vtt`/`srt`/`ass` subtitles support
 - External audiotrack / voiceover support
 - `/30`, `/-21`, etc chat commands to rewind video playback by seconds
 - Hotkeys (`Alt-P` for global play/pause, [etc](https://github.com/RblSb/SyncTube/blob/382f9b2ebedca905028341825350a0fa69d88673/src/client/Buttons.hx#L416-L427))
-- Compact view button with page fullscreen on Android
 - Playback rate synchronization (with leader)
 - Links mask: `foo.com/bar${1-4}.mp4` to add multiple items
 - Override every front-end file you want (`user/res` folder)
-- [Native mobile client](https://github.com/RblSb/SyncTubeApp)
+
+## PlusPlus Features
+- Admin registration via configuring the `adminToken` config key and then registering on the `/admin-register` page
+- `gatePassword` config option to prevent unwanted users from joining
+- Overhauled CSS and mobile view
+
 
 ### Easier playback controls for smaller groups
 - Enable `requestLeaderOnPause` to allow global pause by any user, without `Leader` button
@@ -37,10 +32,11 @@ Default channel example: https://synctube.onrender.com/
 - Iframes (without sync)
 
 ## Setup
-- Open `4200` port in your router settings (port is customizable)
+- Open `4200` port in your router settings (port is cust@omizable)
 - `npm ci` in this project folder ([NodeJS 14+](https://nodejs.org) required)
+- `haxe build-all.hxml` in this project folder ([HAXE homepage](https://haxe.org/))
 - Run `node build/server.js`
-- Open showed "Local" link for yourself and send "Global" link to friends
+- Open "Local" link for yourself and send "Global" link to friends
 
 ## Setup (Docker)
 As alternative, you can install Docker and run:
@@ -52,18 +48,20 @@ As alternative, you can install Docker and run:
 or
 
 > ```shell
-> docker compose up -d
+> docker compose up -d --build
 > ```
-
 - (Docker container hides real local/global ips, so you need to checkout it manually)
 
 
-## Optional dependencies
-If you want to enable `Cache on server` feature for Youtube player, you can also run:
+## "Cache On Server"
+"Cache on Server" is a feature that enables a user to upload videos to the server and serve it to all other users temporarily. The video is deleted after it has been removed from the queue.
+
+This feature requires `ffmpeg` on your server system, it's only used to build single mp4 from downloaded audio/video tracks. Default cache size is 3.0 GiB.
+
+If you want to enable `Cache on server` feature for Youtube player (effectively download the video on the server-side first), you can also run:
 ```shell
 npm i https://github.com/RblSb/ytdlp-nodejs
 ```
-And install `ffmpeg` on your server system, it's only used to build single mp4 from downloaded audio/video tracks. Default cache size is 3.0 GiB.
 
 ## Configuration
 It just works, but you can also check [user/ folder](/user/README.md) for server settings and additional customization.

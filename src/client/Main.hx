@@ -211,6 +211,61 @@ class Main {
 	function initListeners():Void {
 		Buttons.init(this);
 
+		var openBtn:js.html.Element = js.Browser.document.getElementById("openChatBtn");
+		var openBtnFadeTimer:haxe.Timer = null;
+		if (openBtn == null) {
+			openBtn = js.Browser.document.createElement("button");
+			openBtn.id = "openChatBtn";
+			openBtn.innerText = "Expand";
+			openBtn.setAttribute("style",
+				"position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 10000; display: none; padding: .5rem; background: rgba(0,0,0,0.4); color: var(--foreground); border: none; border-radius: .25rem 0 0 .25rem; transition: opacity 200ms; opacity: 1;");
+			js.Browser.document.body.appendChild(openBtn);
+		}
+		final toggleChatBtn = getEl("#togglechat");
+		openBtn.onclick = e -> (cast toggleChatBtn : js.html.ButtonElement).click();
+
+		openBtn.onmouseenter = e -> {
+			openBtn.style.opacity = "1";
+			if (openBtnFadeTimer != null) openBtnFadeTimer.stop();
+		};
+		openBtn.onmouseleave = e -> {
+			if (openBtnFadeTimer != null) openBtnFadeTimer.stop();
+			openBtnFadeTimer = Timer.delay(() -> openBtn.style.opacity = "0.25", 2000);
+		};
+
+		getEl("#togglechat").onclick = e -> {
+			final chat = getEl("#chat");
+			final bodyEl = getEl("body");
+			var sizes = bodyEl.style.gridTemplateColumns;
+			if (sizes == null || sizes == "") sizes = "1fr 4px 300px";
+			var parts = sizes.split(" ");
+			final chatIndex = if (settings.isSwapped) 0 else parts.length - 1;
+			if (chat.style.display == "none") {
+				chat.style.display = "";
+				final prev = bodyEl.getAttribute("data-prev-grid");
+				if (prev != null) {
+					bodyEl.style.gridTemplateColumns = prev;
+					bodyEl.removeAttribute("data-prev-grid");
+				} else {
+					parts[chatIndex] = '${settings.chatSize}px';
+					if (parts.length > 1) parts[1] = '4px';
+					bodyEl.style.gridTemplateColumns = parts.join(" ");
+				}
+				openBtn.style.display = "none";
+				if (openBtnFadeTimer != null) openBtnFadeTimer.stop();
+			} else {
+				bodyEl.setAttribute("data-prev-grid", bodyEl.style.gridTemplateColumns);
+				parts[chatIndex] = "0px";
+				if (parts.length > 1) parts[1] = "0px";
+				bodyEl.style.gridTemplateColumns = parts.join(" ");
+				chat.style.display = "none";
+				openBtn.style.display = "";
+				openBtn.style.opacity = "1";
+				if (openBtnFadeTimer != null) openBtnFadeTimer.stop();
+				openBtnFadeTimer = Timer.delay(() -> openBtn.style.opacity = "0.25", 2000);
+			}
+		}
+
 		final leaderBtn = getEl("#leader_btn");
 		leaderBtn.onclick = toggleLeader;
 		leaderBtn.oncontextmenu = (e:MouseEvent) -> {

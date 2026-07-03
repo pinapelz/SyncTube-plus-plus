@@ -148,7 +148,7 @@
     </section>
     <!-- Footer -->
     <footer id="footer">
-      <p>Powered by <a href="https://github.com/RblSb/SyncTube" target="_blank" rel="noreferrer noopener">SyncTube</a>
+      <p>Powered by <a href="https://github.com/pinapelz/SyncTube-plus-plus" target="_blank" rel="noreferrer noopener">SyncTube++</a>
       </p>
     </footer>
   </main>
@@ -165,9 +165,11 @@
         <span id="usercount">${connection}...</span>
         <ion-icon id="pause-indicator-portrait" name="play" style="display: none;"></ion-icon>
       </button>
-      <span>
-        <button id="leader_btn" class="unselectable" title="${leaderDesc}">${leader}</button>
-        <!-- Settings button -->
+	      <span>
+	        <button id="togglechat" title="Collapse Chat">
+	          <ion-icon name="chevron-forward-circle-outline"></ion-icon>
+	        </button>
+	        <button id="leader_btn" class="unselectable" title="${leaderDesc}">${leader}</button>
         <button id="showoptions" class="collapsed" data-toggle="collapse" data-target="#optionsList"
           aria-expanded="false">
           <ion-icon name="settings-sharp"></ion-icon>
