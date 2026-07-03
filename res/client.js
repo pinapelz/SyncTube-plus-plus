@@ -788,7 +788,7 @@ client_Buttons.init = function(main) {
 		var tmp = url.length > 0 && isSingle;
 		window.document.querySelector("#voiceoverblock").style.display = tmp ? "" : "none";
 		var isExternal = main.isExternalVideoUrl(url);
-		checkboxCache.parentElement.style.display = isSingle && isExternal && main.playersCacheSupport.indexOf(playerType) != -1 ? "" : "none";
+		checkboxCache.parentElement.style.display = (main.personal.group & 8) != 0 && isSingle && isExternal && main.playersCacheSupport.indexOf(playerType) != -1 ? "" : "none";
 		checkboxCache.checked = client_Buttons.settings.checkedCache.indexOf(playerType) != -1;
 		var panel = window.document.querySelector("#addfromurl");
 		var oldH = panel.style.height;
@@ -815,6 +815,10 @@ client_Buttons.init = function(main) {
 		mediaUrl.focus();
 	};
 	window.document.querySelector("#mediaurl-upload").onclick = function(e) {
+		if((main.personal.group & 8) == 0) {
+			main.serverMessage("Only admins may upload files.",true,false);
+			return;
+		}
 		client_Utils.browseJsFile(function(file) {
 			new client_FileUploader(main).uploadFile(file);
 		});
@@ -1093,6 +1097,10 @@ client_FileUploader.__name__ = true;
 client_FileUploader.prototype = {
 	uploadFile: function(file) {
 		var _gthis = this;
+		if((this.main.personal.group & 8) == 0) {
+			this.main.serverMessage("Only admins may upload files.",true,false);
+			return;
+		}
 		var _this_r = new RegExp("[?#%/\\\\]","g".split("u").join(""));
 		var name = StringTools.trim(file.name.replace(_this_r,""));
 		if(name.length == 0) {
@@ -1113,6 +1121,8 @@ client_FileUploader.prototype = {
 		var request = new XMLHttpRequest();
 		request.open("POST","/upload",true);
 		request.setRequestHeader("content-name",name);
+		var tmp = this.main.settings.uuid;
+		request.setRequestHeader("x-client-uuid",tmp != null ? tmp : "");
 		request.upload.onprogress = function(event) {
 			var ratio = 0.0;
 			if(event.lengthComputable) {
@@ -1126,7 +1136,7 @@ client_FileUploader.prototype = {
 			try {
 				data = JSON.parse(request.responseText);
 			} catch( _g ) {
-				haxe_Log.trace(haxe_Exception.caught(_g),{ fileName : "src/client/FileUploader.hx", lineNumber : 61, className : "client.FileUploader", methodName : "uploadFullFile"});
+				haxe_Log.trace(haxe_Exception.caught(_g),{ fileName : "src/client/FileUploader.hx", lineNumber : 66, className : "client.FileUploader", methodName : "uploadFullFile"});
 				return;
 			}
 			if(data.errorId == null) {
@@ -1144,7 +1154,8 @@ client_FileUploader.prototype = {
 	,uploadLastChunk: function(file,name,callback) {
 		var a = file.size - 5242880;
 		var lastChunk = file.slice(a < 0 ? 0 : a);
-		var chunkReq = window.fetch("/upload-last-chunk",{ method : "POST", headers : { "content-name" : name}, body : lastChunk});
+		var tmp = this.main.settings.uuid;
+		var chunkReq = window.fetch("/upload-last-chunk",{ method : "POST", headers : { "content-name" : name, "x-client-uuid" : tmp != null ? tmp : ""}, body : lastChunk});
 		chunkReq.then(function(e) {
 			return e.json().then(function(data) {
 				callback(data);
@@ -1688,7 +1699,7 @@ client_Main.prototype = {
 		var subsUrl = window.document.querySelector("#subsurl");
 		var isTemp = window.document.querySelector("#addfromurl .add-temp").checked;
 		var checkboxCache = window.document.querySelector("#cache-on-server");
-		var doCache = checkboxCache.checked && checkboxCache.parentElement.style.display != "none";
+		var doCache = (this.personal.group & 8) != 0 && checkboxCache.checked && checkboxCache.parentElement.style.display != "none";
 		var url = mediaUrl.value;
 		var subs = subsUrl.value;
 		if(url.length == 0) {
@@ -1836,7 +1847,7 @@ client_Main.prototype = {
 		var data = JSON.parse(e.data);
 		if(this.config != null && this.config.isVerbose) {
 			var t = data.type;
-			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 544, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
+			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 545, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
 		}
 		client_JsApi.fireEvents(data);
 		switch(data.type) {
@@ -2244,6 +2255,10 @@ client_Main.prototype = {
 		} else {
 			adminMenu.style.display = "none";
 		}
+		window.document.querySelector("#mediaurl-upload").style.display = (this.personal.group & 8) != 0 ? "" : "none";
+		var checkboxCache = window.document.querySelector("#cache-on-server");
+		checkboxCache.checked = (this.personal.group & 8) != 0 && checkboxCache.checked;
+		checkboxCache.parentElement.style.display = (this.personal.group & 8) != 0 ? "" : "none";
 	}
 	,guestLogin: function(name) {
 		if(name.length == 0) {
@@ -2694,6 +2709,11 @@ client_Main.prototype = {
 		case "fb":case "flashback":
 			this.send({ type : "Flashback"});
 			return false;
+		case "giveup":
+			this.mergeRedundantArgs(args,0,1);
+			var tmp = args[0];
+			this.send({ type : "SetLeader", setLeader : { clientName : tmp != null ? tmp : ""}});
+			return true;
 		case "help":
 			this.showChatHintList();
 			return true;
@@ -3258,7 +3278,8 @@ client_Player.prototype = {
 	,addVideoItem: function(item,atEnd) {
 		var url = StringTools.htmlEscape(item.url,true);
 		var duration = item.playerType == "IframeType" ? "" : this.duration(item.duration);
-		var itemEl = client_Utils.nodeFromString("<li class=\"queue_entry info\" title=\"" + Lang.get("addedBy") + ": " + item.author + "\">\n\t\t\t\t<header>\n\t\t\t\t\t<span class=\"qe_time\">" + duration + "</span>\n\t\t\t\t\t<h4><a class=\"qe_title\" href=\"" + url + "\" target=\"_blank\">" + StringTools.htmlEscape(item.title) + "</a></h4>\n\t\t\t\t</header>\n\t\t\t\t<span class=\"controls\">\n\t\t\t\t\t<button class=\"qbtn-play\" title=\"" + Lang.get("play") + "\"><ion-icon name=\"play\"></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-next\" title=\"" + Lang.get("setNext") + "\"><ion-icon name=\"arrow-up\"></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-tmp\"><ion-icon></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-delete\" title=\"" + Lang.get("delete") + "\"><ion-icon name=\"close\"></ion-icon></button>\n\t\t\t\t</span>\n\t\t\t</li>");
+		var author = StringTools.htmlEscape(item.author);
+		var itemEl = client_Utils.nodeFromString("<li class=\"queue_entry info\" title=\"" + Lang.get("addedBy") + ": " + author + "\">\n\t\t\t\t<header>\n\t\t\t\t\t<span class=\"qe_time\">" + duration + "</span>\n\t\t\t\t\t<h4><a class=\"qe_title\" href=\"" + url + "\" target=\"_blank\">" + StringTools.htmlEscape(item.title) + "</a></h4>\n\t\t\t\t\t<small class=\"qe_author\">" + Lang.get("addedBy") + ": " + author + "</small>\n\t\t\t\t</header>\n\t\t\t\t<span class=\"controls\">\n\t\t\t\t\t<button class=\"qbtn-play\" title=\"" + Lang.get("play") + "\"><ion-icon name=\"play\"></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-next\" title=\"" + Lang.get("setNext") + "\"><ion-icon name=\"arrow-up\"></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-tmp\"><ion-icon></ion-icon></button>\n\t\t\t\t\t<button class=\"qbtn-delete\" title=\"" + Lang.get("delete") + "\"><ion-icon name=\"close\"></ion-icon></button>\n\t\t\t\t</span>\n\t\t\t</li>");
 		this.videoList.addItem(item,atEnd);
 		this.setItemElementType(itemEl,item.isTemp);
 		if(atEnd) {
@@ -3584,7 +3605,7 @@ client_Player.prototype = {
 			}
 		};
 		http.onError = function(msg) {
-			haxe_Log.trace(msg,{ fileName : "src/client/Player.hx", lineNumber : 675, className : "client.Player", methodName : "skipAd"});
+			haxe_Log.trace(msg,{ fileName : "src/client/Player.hx", lineNumber : 677, className : "client.Player", methodName : "skipAd"});
 		};
 		http.request();
 	}

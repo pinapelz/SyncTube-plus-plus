@@ -2854,6 +2854,14 @@ haxe_crypto_Sha256.prototype = {
 	}
 	,__class__: haxe_crypto_Sha256
 };
+var haxe_ds_IntMap = function() {
+	this.h = { };
+};
+haxe_ds_IntMap.__name__ = true;
+haxe_ds_IntMap.__interfaces__ = [haxe_IMap];
+haxe_ds_IntMap.prototype = {
+	__class__: haxe_ds_IntMap
+};
 var haxe_ds_StringMap = function() {
 	this.h = Object.create(null);
 };
@@ -4085,8 +4093,26 @@ server_HttpServer.prototype = {
 			res.end(data);
 		});
 	}
+	,hasUploadAccess: function(req) {
+		var uuid = req.headers["x-client-uuid"];
+		if(uuid == null || uuid.length == 0) {
+			return false;
+		}
+		var client = Lambda.find(this.main.clients,function(client) {
+			return client.uuid == uuid;
+		});
+		if(client != null) {
+			return (client.group & 8) != 0;
+		} else {
+			return false;
+		}
+	}
 	,uploadFileLastChunk: function(req,res) {
 		var _gthis = this;
+		if(!this.hasUploadAccess(req)) {
+			tools_HttpServerTools.json(tools_HttpServerTools.status(res,403),{ info : "Only admins may upload files.", errorId : "accessError"});
+			return;
+		}
 		var fileName;
 		try {
 			fileName = decodeURIComponent(req.headers["content-name"]);
@@ -4111,6 +4137,10 @@ server_HttpServer.prototype = {
 	}
 	,uploadFile: function(req,res) {
 		var _gthis = this;
+		if(!this.hasUploadAccess(req)) {
+			tools_HttpServerTools.json(tools_HttpServerTools.status(res,403),{ info : "Only admins may upload files.", errorId : "accessError"});
+			return;
+		}
 		var fileName;
 		try {
 			fileName = decodeURIComponent(req.headers["content-name"]);
@@ -4165,7 +4195,7 @@ server_HttpServer.prototype = {
 			}
 		});
 		stream.on("error",function(err) {
-			haxe_Log.trace(err,{ fileName : "src/server/HttpServer.hx", lineNumber : 256, className : "server.HttpServer", methodName : "uploadFile"});
+			haxe_Log.trace(err,{ fileName : "src/server/HttpServer.hx", lineNumber : 277, className : "server.HttpServer", methodName : "uploadFile"});
 			tools_HttpServerTools.json(tools_HttpServerTools.status(res,500),{ info : "File write stream error."});
 			var _this = _gthis.uploadingFilesSizes;
 			if(Object.prototype.hasOwnProperty.call(_this.h,filePath)) {
@@ -4178,7 +4208,7 @@ server_HttpServer.prototype = {
 			_gthis.cache.remove(name);
 		});
 		req.on("error",function(err) {
-			haxe_Log.trace("Request Error:",{ fileName : "src/server/HttpServer.hx", lineNumber : 263, className : "server.HttpServer", methodName : "uploadFile", customParams : [err]});
+			haxe_Log.trace("Request Error:",{ fileName : "src/server/HttpServer.hx", lineNumber : 284, className : "server.HttpServer", methodName : "uploadFile", customParams : [err]});
 			stream.destroy();
 			tools_HttpServerTools.json(tools_HttpServerTools.status(res,500),{ info : "File request error."});
 			var _this = _gthis.uploadingFilesSizes;
@@ -4584,6 +4614,7 @@ var server_Main = function(opts) {
 	this.loadedClientsCount = 0;
 	this.matchGuestName = new EReg("guest [0-9]+","");
 	this.matchHtmlChars = new EReg("[&^<>'\"]","");
+	this.skipVotes = new haxe_ds_IntMap();
 	this.isServerPause = false;
 	this.flashbacks = [];
 	this.messages = [];
@@ -4656,7 +4687,7 @@ var server_Main = function(opts) {
 	preparePort = function() {
 		server_Utils.isPortFree(_gthis.port,function(isFree) {
 			if(!isFree && attempts > 0) {
-				haxe_Log.trace("Warning: port " + _gthis.port + " is already in use. Changed to " + (_gthis.port + 1),{ fileName : "src/server/Main.hx", lineNumber : 157, className : "server.Main", methodName : "new"});
+				haxe_Log.trace("Warning: port " + _gthis.port + " is already in use. Changed to " + (_gthis.port + 1),{ fileName : "src/server/Main.hx", lineNumber : 159, className : "server.Main", methodName : "new"});
 				attempts -= 1;
 				_gthis.port++;
 				preparePort();
@@ -4707,16 +4738,16 @@ server_Main.prototype = {
 		var protocol = ssl == null ? "http" : "https";
 		var port = this.getPort(protocol);
 		var colonPort = this.isDefaultPort() ? "" : ":" + port;
-		haxe_Log.trace("Local: " + protocol + "://" + this.localIp + colonPort,{ fileName : "src/server/Main.hx", lineNumber : 187, className : "server.Main", methodName : "runServer"});
+		haxe_Log.trace("Local: " + protocol + "://" + this.localIp + colonPort,{ fileName : "src/server/Main.hx", lineNumber : 189, className : "server.Main", methodName : "runServer"});
 		if(this.config.localNetworkOnly) {
-			haxe_Log.trace("Global network is disabled in config",{ fileName : "src/server/Main.hx", lineNumber : 189, className : "server.Main", methodName : "runServer"});
+			haxe_Log.trace("Global network is disabled in config",{ fileName : "src/server/Main.hx", lineNumber : 191, className : "server.Main", methodName : "runServer"});
 		} else if(!this.isNoState) {
 			server_Utils.getGlobalIp(function(ip) {
 				if(ip.indexOf(":") != -1) {
 					ip = "[" + ip + "]";
 				}
 				_gthis.globalIp = ip;
-				haxe_Log.trace("Global: " + protocol + "://" + _gthis.globalIp + colonPort,{ fileName : "src/server/Main.hx", lineNumber : 195, className : "server.Main", methodName : "runServer"});
+				haxe_Log.trace("Global: " + protocol + "://" + _gthis.globalIp + colonPort,{ fileName : "src/server/Main.hx", lineNumber : 197, className : "server.Main", methodName : "runServer"});
 			});
 		}
 		var dir = "" + this.rootDir + "/res";
@@ -4737,7 +4768,7 @@ server_Main.prototype = {
 					redirectHttpServer.listen(80);
 				} catch( _g ) {
 					var _g1 = haxe_Exception.caught(_g);
-					haxe_Log.trace("Cannot run http server on port 80 for https redirects:",{ fileName : "src/server/Main.hx", lineNumber : 221, className : "server.Main", methodName : "runServer", customParams : [_g1]});
+					haxe_Log.trace("Cannot run http server on port 80 for https redirects:",{ fileName : "src/server/Main.hx", lineNumber : 223, className : "server.Main", methodName : "runServer", customParams : [_g1]});
 				}
 			}
 			server = js_node_Https.createServer({ key : ssl.key, cert : ssl.cert},$bind(httpServer,httpServer.serveFiles));
@@ -4774,10 +4805,10 @@ server_Main.prototype = {
 			return { key : key, cert : cert};
 		}
 		if(!sys_FileSystem.exists(config.sslKeyPemPath)) {
-			haxe_Log.trace("sslKeyPemPath: absolute file path not found: " + config.sslKeyPemPath,{ fileName : "src/server/Main.hx", lineNumber : 259, className : "server.Main", methodName : "getSslConfig"});
+			haxe_Log.trace("sslKeyPemPath: absolute file path not found: " + config.sslKeyPemPath,{ fileName : "src/server/Main.hx", lineNumber : 261, className : "server.Main", methodName : "getSslConfig"});
 		}
 		if(!sys_FileSystem.exists(config.sslCertPemPath)) {
-			haxe_Log.trace("sslCertPemPath: absolute file path not found: " + config.sslCertPemPath,{ fileName : "src/server/Main.hx", lineNumber : 261, className : "server.Main", methodName : "getSslConfig"});
+			haxe_Log.trace("sslCertPemPath: absolute file path not found: " + config.sslCertPemPath,{ fileName : "src/server/Main.hx", lineNumber : 263, className : "server.Main", methodName : "getSslConfig"});
 		}
 		return null;
 	}
@@ -4834,7 +4865,7 @@ server_Main.prototype = {
 			var field = _g1[_g];
 			++_g;
 			if(Reflect.field(config,field) == null) {
-				haxe_Log.trace("Warning: config field \"" + field + "\" is unknown",{ fileName : "src/server/Main.hx", lineNumber : 306, className : "server.Main", methodName : "getUserConfig"});
+				haxe_Log.trace("Warning: config field \"" + field + "\" is unknown",{ fileName : "src/server/Main.hx", lineNumber : 308, className : "server.Main", methodName : "getUserConfig"});
 			}
 			config[field] = Reflect.field(customConfig,field);
 		}
@@ -4845,14 +4876,14 @@ server_Main.prototype = {
 			var emote = _g1[_g];
 			++_g;
 			if(emoteCopies_h[emote.name]) {
-				haxe_Log.trace("Warning: emote name \"" + emote.name + "\" has copy",{ fileName : "src/server/Main.hx", lineNumber : 312, className : "server.Main", methodName : "getUserConfig"});
+				haxe_Log.trace("Warning: emote name \"" + emote.name + "\" has copy",{ fileName : "src/server/Main.hx", lineNumber : 314, className : "server.Main", methodName : "getUserConfig"});
 			}
 			emoteCopies_h[emote.name] = true;
 			if(!this.verbose) {
 				continue;
 			}
 			if(emoteCopies_h[emote.image]) {
-				haxe_Log.trace("Warning: emote url of name \"" + emote.name + "\" has copy",{ fileName : "src/server/Main.hx", lineNumber : 316, className : "server.Main", methodName : "getUserConfig"});
+				haxe_Log.trace("Warning: emote url of name \"" + emote.name + "\" has copy",{ fileName : "src/server/Main.hx", lineNumber : 318, className : "server.Main", methodName : "getUserConfig"});
 			}
 			emoteCopies_h[emote.image] = true;
 		}
@@ -4889,7 +4920,7 @@ server_Main.prototype = {
 		js_node_Fs.writeFileSync("" + this.userDir + "/users.json",JSON.stringify({ admins : users1, bans : _g, salt : users.salt},null,"\t"));
 	}
 	,saveState: function() {
-		haxe_Log.trace("Saving state...",{ fileName : "src/server/Main.hx", lineNumber : 354, className : "server.Main", methodName : "saveState"});
+		haxe_Log.trace("Saving state...",{ fileName : "src/server/Main.hx", lineNumber : 356, className : "server.Main", methodName : "saveState"});
 		var json = JSON.stringify(this.getCurrentState(),null,"\t");
 		js_node_Fs.writeFileSync(this.statePath,json);
 		this.writeUsers(this.userList);
@@ -4904,7 +4935,7 @@ server_Main.prototype = {
 		if(!sys_FileSystem.exists(this.statePath)) {
 			return;
 		}
-		haxe_Log.trace("Loading state...",{ fileName : "src/server/Main.hx", lineNumber : 378, className : "server.Main", methodName : "loadState"});
+		haxe_Log.trace("Loading state...",{ fileName : "src/server/Main.hx", lineNumber : 380, className : "server.Main", methodName : "loadState"});
 		var state = JSON.parse(js_node_Fs.readFileSync(this.statePath,{ encoding : "utf8"}));
 		state.flashbacks = state.flashbacks != null ? state.flashbacks : [];
 		state.cachedFiles = state.cachedFiles != null ? state.cachedFiles : [];
@@ -4926,7 +4957,7 @@ server_Main.prototype = {
 	}
 	,logError: function(type,data) {
 		this.cache.removeOlderCache(1048576);
-		haxe_Log.trace(type,{ fileName : "src/server/Main.hx", lineNumber : 402, className : "server.Main", methodName : "logError", customParams : [data]});
+		haxe_Log.trace(type,{ fileName : "src/server/Main.hx", lineNumber : 404, className : "server.Main", methodName : "logError", customParams : [data]});
 		var crashesFolder = "" + this.userDir + "/crashes";
 		server_Utils.ensureDir(crashesFolder);
 		var name = DateTools.format(new Date(),"%Y-%m-%d_%H_%M_%S") + "-" + type;
@@ -4948,7 +4979,7 @@ server_Main.prototype = {
 			if(_gthis.clients.length == 0) {
 				return;
 			}
-			haxe_Log.trace("Ping " + url,{ fileName : "src/server/Main.hx", lineNumber : 415, className : "server.Main", methodName : "initIntergationHandlers"});
+			haxe_Log.trace("Ping " + url,{ fileName : "src/server/Main.hx", lineNumber : 417, className : "server.Main", methodName : "initIntergationHandlers"});
 			js_node_Http.get(url,null,function(r) {
 			});
 		};
@@ -4963,17 +4994,27 @@ server_Main.prototype = {
 		}
 		return req.socket.remoteAddress;
 	}
+	,isLoopbackIp: function(ip) {
+		if(ip == null) {
+			return false;
+		}
+		if(!(ip == "127.0.0.1" || ip == "::1")) {
+			return ip == "::ffff:127.0.0.1";
+		} else {
+			return true;
+		}
+	}
 	,addAdmin: function(name,password) {
 		password += this.config.salt;
 		var hash = haxe_crypto_Sha256.encode(password);
 		this.userList.admins.push({ name : name, hash : hash});
-		haxe_Log.trace("Admin " + name + " added.",{ fileName : "src/server/Main.hx", lineNumber : 436, className : "server.Main", methodName : "addAdmin"});
+		haxe_Log.trace("Admin " + name + " added.",{ fileName : "src/server/Main.hx", lineNumber : 443, className : "server.Main", methodName : "addAdmin"});
 	}
 	,removeAdmin: function(name) {
 		HxOverrides.remove(this.userList.admins,Lambda.find(this.userList.admins,function(item) {
 			return item.name == name;
 		}));
-		haxe_Log.trace("Admin " + name + " removed.",{ fileName : "src/server/Main.hx", lineNumber : 443, className : "server.Main", methodName : "removeAdmin"});
+		haxe_Log.trace("Admin " + name + " removed.",{ fileName : "src/server/Main.hx", lineNumber : 450, className : "server.Main", methodName : "removeAdmin"});
 	}
 	,replayLog: function(events) {
 		var _gthis = this;
@@ -5040,8 +5081,9 @@ server_Main.prototype = {
 		var ip = this.clientIp(req);
 		var id = this.freeIds.length > 0 ? this.freeIds.shift() : this.clients.length;
 		var name = "Guest " + (id + 1);
-		haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 506, className : "server.Main", methodName : "onConnect", customParams : ["" + name + " connected (" + ip + ")"]});
-		var isAdmin = this.config.localAdmins && req.socket.localAddress == ip;
+		haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 513, className : "server.Main", methodName : "onConnect", customParams : ["" + name + " connected (" + ip + ")"]});
+		var remoteIp = req.socket.remoteAddress;
+		var isAdmin = this.config.localAdmins && this.isLoopbackIp(remoteIp);
 		var client = new Client(ws,req,id,name,0);
 		client.uuid = uuid;
 		client.setGroupFlag(ClientGroup.Admin,isAdmin);
@@ -5054,7 +5096,7 @@ server_Main.prototype = {
 			var obj = _gthis.wsEventParser.fromJson(data.toString());
 			if(_gthis.wsEventParser.errors.length > 0 || _gthis.noTypeObj(obj)) {
 				var errors = "" + ("Wrong request for type \"" + obj.type + "\":") + "\n" + json2object_ErrorUtils.convertErrorArray(_gthis.wsEventParser.errors);
-				haxe_Log.trace(errors,{ fileName : "src/server/Main.hx", lineNumber : 523, className : "server.Main", methodName : "onConnect"});
+				haxe_Log.trace(errors,{ fileName : "src/server/Main.hx", lineNumber : 531, className : "server.Main", methodName : "onConnect"});
 				_gthis.serverMessage(client,errors);
 				return;
 			}
@@ -5120,6 +5162,10 @@ server_Main.prototype = {
 			})) {
 				this.serverMessage(client,"videoAlreadyExistsError");
 				return;
+			}
+			if(item.doCache && (client.group & 8) == 0) {
+				item.doCache = false;
+				this.serverMessage(client,"Only admins may cache videos.");
 			}
 			if(!item.doCache) {
 				data.addVideo.item = item;
@@ -5211,6 +5257,7 @@ server_Main.prototype = {
 			if(this.isPlaylistLockedFor(client)) {
 				return;
 			}
+			this.resetSkipVote();
 			if(!this.checkPermission(client,"removeVideo")) {
 				return;
 			}
@@ -5249,14 +5296,14 @@ server_Main.prototype = {
 			if((client.group & 8) == 0) {
 				return;
 			}
-			haxe_Log.trace("Crashing...",{ fileName : "src/server/Main.hx", lineNumber : 1043, className : "server.Main", methodName : "onMessage"});
+			haxe_Log.trace("Crashing...",{ fileName : "src/server/Main.hx", lineNumber : 1073, className : "server.Main", methodName : "onMessage"});
 			null[1]++;
 			break;
 		case "Disconnected":
 			if(!internal) {
 				return;
 			}
-			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 588, className : "server.Main", methodName : "onMessage", customParams : ["Client " + client.name + " disconnected"]});
+			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 596, className : "server.Main", methodName : "onMessage", customParams : ["Client " + client.name + " disconnected"]});
 			server_Utils.sortedPush(this.freeIds,client.id);
 			HxOverrides.remove(this.clients,client);
 			this.sendClientList();
@@ -5397,7 +5444,7 @@ server_Main.prototype = {
 				this.send(client,{ type : "LoginError"});
 				return;
 			}
-			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 679, className : "server.Main", methodName : "onMessage", customParams : ["Client " + client.name + " logged as " + name]});
+			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 687, className : "server.Main", methodName : "onMessage", customParams : ["Client " + client.name + " logged as " + name]});
 			client.name = name;
 			client.setGroupFlag(ClientGroup.User,true);
 			this.checkBan(client);
@@ -5410,7 +5457,7 @@ server_Main.prototype = {
 			var oldName = client.name;
 			client.name = "Guest " + (this.clients.indexOf(client) + 1);
 			client.setGroupFlag(ClientGroup.User,false);
-			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 700, className : "server.Main", methodName : "onMessage", customParams : ["Client " + oldName + " logout to " + client.name]});
+			haxe_Log.trace(HxOverrides.dateStr(new Date()),{ fileName : "src/server/Main.hx", lineNumber : 708, className : "server.Main", methodName : "onMessage", customParams : ["Client " + oldName + " logout to " + client.name]});
 			this.send(client,{ type : data.type, logout : { oldClientName : oldName, clientName : client.name, clients : this.clientList()}});
 			this.sendClientListExcept(client);
 			break;
@@ -5472,6 +5519,7 @@ server_Main.prototype = {
 			if(!this.checkPermission(client,"changeOrder")) {
 				return;
 			}
+			this.resetSkipVote();
 			var pos = data.playItem.pos;
 			if(!this.videoList.hasItem(pos)) {
 				return;
@@ -5490,6 +5538,9 @@ server_Main.prototype = {
 		case "RemoveVideo":
 			if(this.videoList.items.length == 0) {
 				return;
+			}
+			if(this.activeSkipVoteUrl == data.removeVideo.url) {
+				this.resetSkipVote();
 			}
 			if(this.isPlaylistLockedFor(client)) {
 				return;
@@ -5540,10 +5591,24 @@ server_Main.prototype = {
 				if(!this.checkPermission(client,"requestLeader")) {
 					return;
 				}
-			} else if((client.group & 4) == 0 && clientName != "") {
-				if(!this.checkPermission(client,"setLeader")) {
+				var currentLeader = Lambda.find(this.clients,function(c) {
+					return (c.group & 4) != 0;
+				});
+				if((client.group & 8) == 0 && (currentLeader != null && currentLeader != client)) {
+					this.serverMessage(client,"Leader request sent to " + currentLeader.name + ". Waiting for /giveup " + client.name + ".");
+					this.serverMessage(currentLeader,"" + client.name + " requested leader. Use /giveup " + client.name + " to transfer leadership.");
 					return;
 				}
+			} else if(clientName == "") {
+				if((client.group & 4) == 0 && !this.checkPermission(client,"setLeader")) {
+					return;
+				}
+			} else if((client.group & 4) == 0 && !this.checkPermission(client,"setLeader")) {
+				return;
+			}
+			if(clientName != "" && ClientTools.getByName(this.clients,clientName) == null) {
+				this.serverMessage(client,"Client \"" + clientName + "\" not found.");
+				return;
 			}
 			this.isServerPause = false;
 			ClientTools.setLeader(this.clients,clientName);
@@ -5617,7 +5682,7 @@ server_Main.prototype = {
 			if(!this.checkPermission(client,"removeVideo")) {
 				return;
 			}
-			this.skipVideo(data);
+			this.handleSkipVote(client,data);
 			break;
 		case "ToggleItemType":
 			if(this.isPlaylistLockedFor(client)) {
@@ -5699,10 +5764,78 @@ server_Main.prototype = {
 			client.ws.send(json,null);
 		}
 	}
+	,resetSkipVote: function() {
+		this.activeSkipVoteUrl = null;
+		this.skipVotes.h = { };
+	}
+	,getSkipVoteEligibleClients: function() {
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.clients;
+		while(_g1 < _g2.length) {
+			var c = _g2[_g1];
+			++_g1;
+			if((c.group & 1) == 0 && c.hasPermission("removeVideo",this.config.permissions)) {
+				_g.push(c);
+			}
+		}
+		return _g;
+	}
+	,getSkipVoteCount: function() {
+		var count = 0;
+		var _g = 0;
+		var _g1 = this.getSkipVoteEligibleClients();
+		while(_g < _g1.length) if(this.skipVotes.h[_g1[_g++].id]) {
+			++count;
+		}
+		return count;
+	}
+	,getSkipVoteRequiredCount: function() {
+		var total = this.getSkipVoteEligibleClients().length;
+		if(total <= 1) {
+			return 1;
+		}
+		return (Math.floor(total / 2) | 0) + 1;
+	}
+	,handleSkipVote: function(client,data) {
+		if(this.videoList.items.length == 0) {
+			return;
+		}
+		var _this = this.videoList;
+		var item = _this.items[_this.pos];
+		if(item.url != data.skipVideo.url) {
+			return;
+		}
+		if((client.group & 8) != 0 || item.author == client.name) {
+			if(this.activeSkipVoteUrl != null) {
+				this.broadcast({ type : "ServerMessage", serverMessage : { textId : "" + client.name + " " + ((client.group & 8) != 0 ? "forced skip" : "skipped own queued video") + "."}});
+			}
+			this.resetSkipVote();
+			this.skipVideo(data);
+			return;
+		}
+		if(this.activeSkipVoteUrl != item.url) {
+			this.activeSkipVoteUrl = item.url;
+			this.skipVotes.h = { };
+		}
+		if(this.skipVotes.h[client.id]) {
+			this.serverMessage(client,"You already voted to skip this video.");
+			return;
+		}
+		this.skipVotes.h[client.id] = true;
+		var votes = this.getSkipVoteCount();
+		var required = this.getSkipVoteRequiredCount();
+		this.broadcast({ type : "ServerMessage", serverMessage : { textId : "" + client.name + " voted to skip (" + votes + "/" + required + ")."}});
+		if(votes >= required) {
+			this.resetSkipVote();
+			this.skipVideo(data);
+		}
+	}
 	,skipVideo: function(data) {
 		if(this.videoList.items.length == 0) {
 			return;
 		}
+		this.resetSkipVote();
 		var _this = this.videoList;
 		if(_this.items[_this.pos].url != data.skipVideo.url) {
 			return;
@@ -5747,7 +5880,7 @@ server_Main.prototype = {
 			client.setGroupFlag(ClientGroup.Banned,!isOutdated);
 			if(isOutdated) {
 				HxOverrides.remove(this.userList.bans,ban);
-				haxe_Log.trace("" + client.name + " ban removed",{ fileName : "src/server/Main.hx", lineNumber : 1152, className : "server.Main", methodName : "checkBan"});
+				haxe_Log.trace("" + client.name + " ban removed",{ fileName : "src/server/Main.hx", lineNumber : 1255, className : "server.Main", methodName : "checkBan"});
 				this.sendClientList();
 			}
 			break;

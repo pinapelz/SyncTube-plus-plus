@@ -415,11 +415,13 @@ class Player {
 	public function addVideoItem(item:VideoItem, atEnd:Bool):Void {
 		final url = item.url.htmlEscape(true);
 		final duration = item.playerType == IframeType ? "" : duration(item.duration);
+		final author = item.author.htmlEscape();
 		final itemEl = Utils.nodeFromString(
-			'<li class="queue_entry info" title="${Lang.get("addedBy")}: ${item.author}">
+			'<li class="queue_entry info" title="${Lang.get("addedBy")}: $author">
 				<header>
 					<span class="qe_time">$duration</span>
 					<h4><a class="qe_title" href="$url" target="_blank">${item.title.htmlEscape()}</a></h4>
+					<small class="qe_author">${Lang.get("addedBy")}: $author</small>
 				</header>
 				<span class="controls">
 					<button class="qbtn-play" title="${Lang.get("play")}"><ion-icon name="play"></ion-icon></button>

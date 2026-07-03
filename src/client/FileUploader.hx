@@ -18,6 +18,10 @@ class FileUploader {
 	}
 
 	public function uploadFile(file:File):Void {
+		if (!main.isAdmin()) {
+			main.serverMessage("Only admins may upload files.", true, false);
+			return;
+		}
 		var name = ~/[?#%\/\\]/g.replace(file.name, "").trim();
 		if (name.length == 0) name = "video";
 		name = (window : Dynamic).encodeURIComponent(name);
@@ -39,6 +43,7 @@ class FileUploader {
 		final request = new XMLHttpRequest();
 		request.open("POST", "/upload", true);
 		request.setRequestHeader("content-name", name);
+		request.setRequestHeader("x-client-uuid", main.settings.uuid ?? "");
 
 		request.upload.onprogress = (event:ProgressEvent) -> {
 			var ratio = 0.0;
@@ -81,6 +86,7 @@ class FileUploader {
 			method: "POST",
 			headers: {
 				"content-name": name,
+				"x-client-uuid": main.settings.uuid ?? "",
 			},
 			body: lastChunk,
 		});

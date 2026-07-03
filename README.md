@@ -8,20 +8,18 @@ Lightweight modern implementation and a very easy way to run locally.
 - External `vtt`/`srt`/`ass` subtitles support
 - External audiotrack / voiceover support
 - `/30`, `/-21`, etc chat commands to rewind video playback by seconds
-- Hotkeys (`Alt-P` for global play/pause, [etc](https://github.com/RblSb/SyncTube/blob/382f9b2ebedca905028341825350a0fa69d88673/src/client/Buttons.hx#L416-L427))
+- Hotkeys (`Alt-P` for global play/pause, [etc](https://github.com/pinapelz/SyncTube-plus-plus/blob/382f9b2ebedca905028341825350a0fa69d88673/src/client/Buttons.hx#L416-L427))
 - Playback rate synchronization (with leader)
 - Links mask: `foo.com/bar${1-4}.mp4` to add multiple items
 - Override every front-end file you want (`user/res` folder)
 
-## PlusPlus Features
+## PlusPlus Features + Changes
 - Admin registration via configuring the `adminToken` config key and then registering on the `/admin-register` page
 - `gatePassword` config option to prevent unwanted users from joining
-- Overhauled CSS and mobile view
-
-
-### Easier playback controls for smaller groups
-- Enable `requestLeaderOnPause` to allow global pause by any user, without `Leader` button
-- Enable `unpauseWithoutLeader` to allow global unpause for non-leaders
+- Majority vote skip management (Admins and the original video queuer overrides this behavior)
+- Leader request now requires the current leader to give up the role (via `/giveup <new-leader>`)
+- Overhauled default CSS and improved mobile view
+- Caching and uploading files is limited to Admin users only
 
 ## Supported players
 - Youtube (videos, shorts, streams and playlists)
@@ -54,7 +52,7 @@ or
 
 
 ## "Cache On Server"
-"Cache on Server" is a feature that enables a user to upload videos to the server and serve it to all other users temporarily. The video is deleted after it has been removed from the queue.
+"Cache on Server" is a feature that enables a user to upload videos to the server and serve it to all other users temporarily. The video is deleted after it has been removed from the queue. This feature is limited to admin users only.
 
 This feature requires `ffmpeg` on your server system, it's only used to build single mp4 from downloaded audio/video tracks. Default cache size is 3.0 GiB.
 

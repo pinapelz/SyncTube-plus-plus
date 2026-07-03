@@ -356,7 +356,8 @@ class Main {
 		final checkboxTemp:InputElement = getEl("#addfromurl .add-temp");
 		final isTemp = checkboxTemp.checked;
 		final checkboxCache:InputElement = getEl("#cache-on-server");
-		final doCache = checkboxCache.checked
+		final doCache = isAdmin()
+			&& checkboxCache.checked
 			&& checkboxCache.parentElement.style.display != "none";
 		final url = mediaUrl.value;
 		final subs = subsUrl.value;
@@ -905,6 +906,13 @@ class Main {
 		final adminMenu = getEl("#adminMenu");
 		if (isAdmin()) adminMenu.style.display = "";
 		else adminMenu.style.display = "none";
+
+		final uploadBtn = getEl("#mediaurl-upload");
+		uploadBtn.style.display = isAdmin() ? "" : "none";
+
+		final checkboxCache:InputElement = getEl("#cache-on-server");
+		checkboxCache.checked = isAdmin() && checkboxCache.checked;
+		checkboxCache.parentElement.style.display = isAdmin() ? "" : "none";
 	}
 
 	public function guestLogin(name:String):Void {
@@ -1376,6 +1384,16 @@ class Main {
 				return true;
 			case "clear":
 				send({type: ClearChat});
+				return true;
+			case "giveup":
+				mergeRedundantArgs(args, 0, 1);
+				final name = args[0] ?? "";
+				send({
+					type: SetLeader,
+					setLeader: {
+						clientName: name
+					}
+				});
 				return true;
 			case "flashback", "fb":
 				send({type: Flashback});

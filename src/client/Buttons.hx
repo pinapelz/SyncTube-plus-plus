@@ -228,7 +228,7 @@ class Buttons {
 			getEl("#voiceoverblock").style.display = (url.length > 0 && isSingle) ? "" : "none";
 
 			final isExternal = main.isExternalVideoUrl(url);
-			final showCache = isSingle && isExternal
+			final showCache = main.isAdmin() && isSingle && isExternal
 				&& main.playersCacheSupport.contains(playerType);
 			checkboxCache.parentElement.style.display = showCache ? "" : "none";
 			checkboxCache.checked = settings.checkedCache.contains(playerType);
@@ -258,6 +258,10 @@ class Buttons {
 		}
 
 		getEl("#mediaurl-upload").onclick = e -> {
+			if (!main.isAdmin()) {
+				main.serverMessage("Only admins may upload files.", true, false);
+				return;
+			}
 			Utils.browseJsFile(file -> {
 				final uploader = new FileUploader(main);
 				uploader.uploadFile(file);

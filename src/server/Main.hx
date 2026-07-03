@@ -82,6 +82,8 @@ class Main {
 	**/
 	var emptyRoomCallbackTimer:Null<Timer>;
 	var isServerPause = false;
+	var activeSkipVoteUrl:Null<String>;
+	final skipVotes:Map<Int, Bool> = [];
 
 	static function main():Void {
 		new Main({
@@ -426,6 +428,11 @@ class Main {
 		return req.socket.remoteAddress;
 	}
 
+	function isLoopbackIp(ip:Null<String>):Bool {
+		if (ip == null) return false;
+		return ip == "127.0.0.1" || ip == "::1" || ip == "::ffff:127.0.0.1";
+	}
+
 	public function addAdmin(name:String, password:String):Void {
 		password += config.salt;
 		final hash = Sha256.encode(password);
@@ -504,7 +511,8 @@ class Main {
 		final id = freeIds.length > 0 ? freeIds.shift() : clients.length;
 		final name = 'Guest ${id + 1}';
 		trace(Date.now().toString(), '$name connected ($ip)');
-		final isAdmin = config.localAdmins && req.socket.localAddress == ip;
+		final remoteIp = req.socket.remoteAddress;
+		final isAdmin = config.localAdmins && isLoopbackIp(remoteIp);
 		final client = new Client(ws, req, id, name, 0);
 		client.uuid = uuid;
 		client.isAdmin = isAdmin;
@@ -760,6 +768,10 @@ class Main {
 					// Initial timer start if VideoLoaded is not happen
 					if (videoList.length == 1) restartWaitTimer();
 				}
+				if (item.doCache && !client.isAdmin) {
+					item.doCache = false;
+					serverMessage(client, "Only admins may cache videos.");
+				}
 				if (!item.doCache) {
 					addVideo();
 				} else {
@@ -789,6 +801,7 @@ class Main {
 
 			case RemoveVideo:
 				if (videoList.length == 0) return;
+				if (activeSkipVoteUrl == data.removeVideo.url) resetSkipVote();
 				if (isPlaylistLockedFor(client)) return;
 				if (!checkPermission(client, RemoveVideoPerm)) return;
 				final url = data.removeVideo.url;
@@ -805,7 +818,7 @@ class Main {
 
 			case SkipVideo:
 				if (!checkPermission(client, RemoveVideoPerm)) return;
-				skipVideo(data);
+				handleSkipVote(client, data);
 
 			case Pause:
 				if (videoList.length == 0) return;
@@ -910,11 +923,26 @@ class Main {
 				});
 
 			case SetLeader:
-				final clientName = data.setLeader.clientName;
+				var clientName = data.setLeader.clientName;
 				if (client.name == clientName) {
 					if (!checkPermission(client, RequestLeaderPerm)) return;
-				} else if (!client.isLeader && clientName != "") {
-					if (!checkPermission(client, SetLeaderPerm)) return;
+					final currentLeader = clients.find(c -> c.isLeader);
+					final hasOtherLeader = currentLeader != null && currentLeader != client;
+					if (!client.isAdmin && hasOtherLeader) {
+						serverMessage(client,
+							'Leader request sent to ${currentLeader.name}. Waiting for /giveup ${client.name}.');
+						serverMessage(currentLeader,
+							'${client.name} requested leader. Use /giveup ${client.name} to transfer leadership.');
+						return;
+					}
+				} else if (clientName == "") {
+					if (!client.isLeader && !checkPermission(client, SetLeaderPerm)) return;
+				} else if (!client.isLeader && !checkPermission(client, SetLeaderPerm)) {
+					return;
+				}
+				if (clientName != "" && clients.getByName(clientName) == null) {
+					serverMessage(client, 'Client "$clientName" not found.');
+					return;
 				}
 				isServerPause = false;
 				clients.setLeader(clientName);
@@ -938,6 +966,7 @@ class Main {
 
 			case PlayItem:
 				if (!checkPermission(client, ChangeOrderPerm)) return;
+				resetSkipVote();
 				final pos = data.playItem.pos;
 				if (!videoList.hasItem(pos)) return;
 				if (videoTimer.getTime() > FLASHBACK_DIST) {
@@ -972,6 +1001,7 @@ class Main {
 
 			case ClearPlaylist:
 				if (isPlaylistLockedFor(client)) return;
+				resetSkipVote();
 				if (!checkPermission(client, RemoveVideoPerm)) return;
 				if (videoList.length != 0) {
 					if (videoTimer.getTime() > FLASHBACK_DIST) {
@@ -1113,8 +1143,81 @@ class Main {
 		return value;
 	}
 
+	function resetSkipVote():Void {
+		activeSkipVoteUrl = null;
+		skipVotes.clear();
+	}
+
+	function getSkipVoteEligibleClients():Array<Client> {
+		return [
+			for (c in clients)
+				if (!c.isBanned && c.hasPermission(RemoveVideoPerm, config.permissions)) c
+		];
+	}
+
+	function getSkipVoteCount():Int {
+		var count = 0;
+		for (c in getSkipVoteEligibleClients()) {
+			if (skipVotes[c.id]) count++;
+		}
+		return count;
+	}
+
+	function getSkipVoteRequiredCount():Int {
+		final total = getSkipVoteEligibleClients().length;
+		if (total <= 1) return 1;
+		return Std.int(Math.floor(total / 2)) + 1;
+	}
+
+	function handleSkipVote(client:Client, data:WsEvent):Void {
+		if (videoList.length == 0) return;
+		final item = videoList.currentItem;
+		if (item.url != data.skipVideo.url) return;
+
+		final isOwnItemAuthor = item.author == client.name;
+		if (client.isAdmin || isOwnItemAuthor) {
+			if (activeSkipVoteUrl != null) {
+				final reason = client.isAdmin ? "forced skip" : "skipped own queued video";
+				broadcast({
+					type: ServerMessage,
+					serverMessage: {
+						textId: '${client.name} ${reason}.'
+					}
+				});
+			}
+			resetSkipVote();
+			skipVideo(data);
+			return;
+		}
+
+		if (activeSkipVoteUrl != item.url) {
+			activeSkipVoteUrl = item.url;
+			skipVotes.clear();
+		}
+		if (skipVotes[client.id]) {
+			serverMessage(client, "You already voted to skip this video.");
+			return;
+		}
+		skipVotes[client.id] = true;
+
+		final votes = getSkipVoteCount();
+		final required = getSkipVoteRequiredCount();
+		broadcast({
+			type: ServerMessage,
+			serverMessage: {
+				textId: '${client.name} voted to skip (${votes}/${required}).'
+			}
+		});
+
+		if (votes >= required) {
+			resetSkipVote();
+			skipVideo(data);
+		}
+	}
+
 	function skipVideo(data:WsEvent):Void {
 		if (videoList.length == 0) return;
+		resetSkipVote();
 		final item = videoList.currentItem;
 		if (item.url != data.skipVideo.url) return;
 		final dur = videoList.currentItem.duration;

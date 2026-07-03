@@ -194,7 +194,21 @@ class HttpServer {
 		});
 	}
 
+	function hasUploadAccess(req:IncomingMessage):Bool {
+		final uuid:Null<String> = cast req.headers["x-client-uuid"];
+		if (uuid == null || uuid.length == 0) return false;
+		final client = main.clients.find(client -> client.uuid == uuid);
+		return client != null && client.isAdmin;
+	}
+
 	function uploadFileLastChunk(req:IncomingMessage, res:ServerResponse) {
+		if (!hasUploadAccess(req)) {
+			res.status(403).json({
+				info: "Only admins may upload files.",
+				errorId: "accessError"
+			});
+			return;
+		}
 		var fileName = try decodeURIComponent(req.headers["content-name"]) catch (e) "";
 		if (fileName.trim().length == 0) fileName = null;
 		final name = cache.getFreeFileName(fileName);
@@ -213,6 +227,13 @@ class HttpServer {
 	}
 
 	function uploadFile(req:IncomingMessage, res:ServerResponse) {
+		if (!hasUploadAccess(req)) {
+			res.status(403).json({
+				info: "Only admins may upload files.",
+				errorId: "accessError"
+			});
+			return;
+		}
 		var fileName = try decodeURIComponent(req.headers["content-name"]) catch (e) "";
 		if (fileName.trim().length == 0) fileName = null;
 		final name = cache.getFreeFileName(fileName);
