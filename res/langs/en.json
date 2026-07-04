@@ -115,5 +115,6 @@
   "areYouSure": "Are you sure?",
   "dataWillBeLost": "The data will be lost.",
 
-  "setupTitle": "Welcome to Dohee Cinema!"
+  "setupTitle": "Welcome to Dohee Cinema!",
+  "registerAdmin": "Register as Admin"
 }

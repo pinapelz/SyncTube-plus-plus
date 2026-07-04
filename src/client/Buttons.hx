@@ -234,8 +234,8 @@ class Buttons {
 			checkboxCache.checked = settings.checkedCache.contains(playerType);
 
 			final panel = getEl("#addfromurl");
-			final oldH = panel.style.height; // save for animation
-			panel.style.height = ""; // to calculate height from content
+			final oldH = panel.style.height;
+			panel.style.height = "";
 			final newH = Utils.outerHeight(panel) + "px";
 			panel.style.height = oldH;
 			Timer.delay(() -> panel.style.height = newH, 0);

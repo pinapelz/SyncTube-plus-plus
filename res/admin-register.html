@@ -67,6 +67,15 @@
         const successEl = document.createElement("div");
         successEl.innerText = "Admin account created! You can now log in.";
         successEl.style.color = "green";
+        const homeLink = document.createElement("a");
+        homeLink.innerText = "Go back";
+        homeLink.href = "/";
+        homeLink.style.display = "inline-block";
+        homeLink.style.marginTop = "8px";
+        homeLink.style.color = "blue";
+        homeLink.style.textDecoration = "underline";
+        successEl.appendChild(document.createElement("br"));
+        successEl.appendChild(homeLink);
         errorsElement.appendChild(successEl);
 
         Array.from(formElement.elements).forEach(el => { el.disabled = true; });
