@@ -27,7 +27,7 @@
   "videoAlreadyExistsError": "The video already exists in playlist.",
   "addVideoError": "Failed to add video.",
   "adminsCannotBeBannedError": "Admins cannot be banned. Remove them first.",
-  "caching": "Caching",
+  "caching": "Caching on Remote",
   "downloading": "Downloading",
   "uploading": "Uploading",
   "rawVideo": "Raw video",

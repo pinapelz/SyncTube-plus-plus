@@ -1771,8 +1771,15 @@ client_Main.prototype = {
 				url = "" + protocol + "//" + url;
 			}
 		}
-		this.player.getVideoData({ url : url, atEnd : atEnd},function(data) {
+		var obj = { url : url, atEnd : atEnd};
+		if(doCache) {
+			this.showProgressInfo(Lang.get("caching") + "...");
+		}
+		this.player.getVideoData(obj,function(data) {
 			if(data.duration == 0) {
+				if(doCache) {
+					_gthis.hideDynamicChin();
+				}
 				_gthis.serverMessage(Lang.get("addVideoError"));
 				return;
 			}
@@ -1847,7 +1854,7 @@ client_Main.prototype = {
 		var data = JSON.parse(e.data);
 		if(this.config != null && this.config.isVerbose) {
 			var t = data.type;
-			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 545, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
+			haxe_Log.trace("Event: " + data.type,{ fileName : "src/client/Main.hx", lineNumber : 547, className : "client.Main", methodName : "onMessage", customParams : [Reflect.field(data,t.charAt(0).toLowerCase() + HxOverrides.substr(t,1,null))]});
 		}
 		client_JsApi.fireEvents(data);
 		switch(data.type) {

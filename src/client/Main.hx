@@ -424,8 +424,10 @@ class Main {
 			url: url,
 			atEnd: atEnd
 		};
+		if (doCache) showProgressInfo(Lang.get("caching") + "...");
 		player.getVideoData(obj, (data:VideoData) -> {
 			if (data.duration == 0) {
+				if (doCache) hideDynamicChin();
 				serverMessage(Lang.get("addVideoError"));
 				return;
 			}
